@@ -1,9 +1,13 @@
+const { resolve } = require("path");
+const { config } = require("dotenv");
 const express = require("express");
 const cors = require("cors");
 const cookieSession = require("cookie-session");
 const jwt = require('jsonwebtoken');
-const axios = require('axios');
+// const axios = require('axios');
 const bodyParser = require('body-parser');
+
+config({ path: resolve(__dirname, "./.env") });
 
 const app = express();
 
@@ -32,7 +36,6 @@ app.use(
 
 // database
 const db = require("./app/models");
-const userRoutes = require("./app/routes/user.routes");
 const Role = db.role;
 
 db.sequelize.sync();
@@ -46,114 +49,114 @@ require("./app/routes/activities.routes")(app);
 require("./app/routes/profilepicture.routes")(app);
 require("./app/routes/globalimages.routes")(app);
 
-var subs = ""
-var transactions = ""
-function filterSubs() {
-  return axios.get(
-    'http://localhost:8080/api/payment/filterSubscriptions',
-  );
-}
+// var subs = ""
+// var transactions = ""
+// function filterSubs() {
+//   return axios.get(
+//     'http://localhost:8080/api/payment/filterSubscriptions',
+//   );
+// }
 
-function pendingTransactions() {
-  return axios.get(
-    'http://localhost:8080/api/payment/getPendingTransactions',
-  );
-}
+// function pendingTransactions() {
+//   return axios.get(
+//     'http://localhost:8080/api/payment/getPendingTransactions',
+//   );
+// }
 
-function createTransaction(amount,type,userId,subscriptionId) {
-  return axios.post(
-    'http://localhost:8080/api/payment/createTransaction',{
-      amount,
-      type,
-      userId,
-      subscriptionId
-    }
-  );
-}
-function changeNextDate(subscriptionId, nextPaymentDate, lastPaymentDate) {
-  return axios.post(
-    'http://localhost:8080/api/payment/modifySubscription',{
-      subscriptionId, 
-      nextPaymentDate, 
-      lastPaymentDate
-    }
-  );
-}
+// function createTransaction(amount,type,userId,subscriptionId) {
+//   return axios.post(
+//     'http://localhost:8080/api/payment/createTransaction',{
+//       amount,
+//       type,
+//       userId,
+//       subscriptionId
+//     }
+//   );
+// }
+// function changeNextDate(subscriptionId, nextPaymentDate, lastPaymentDate) {
+//   return axios.post(
+//     'http://localhost:8080/api/payment/modifySubscription',{
+//       subscriptionId, 
+//       nextPaymentDate, 
+//       lastPaymentDate
+//     }
+//   );
+// }
 
-function modifyTransactionState(transactionId,state) {
-  return axios.post(
-    'http://localhost:8080/api/payment/modifyTransactionState',{
-      transactionId,
-      state
-    }
-  );
-}
+// function modifyTransactionState(transactionId,state) {
+//   return axios.post(
+//     'http://localhost:8080/api/payment/modifyTransactionState',{
+//       transactionId,
+//       state
+//     }
+//   );
+// }
 
-function countRecurrentTransactions() {
-  return axios.post(
-    'http://localhost:8080/api/payment/countRecurrentTransactions',
-  );
-}
+// function countRecurrentTransactions() {
+//   return axios.post(
+//     'http://localhost:8080/api/payment/countRecurrentTransactions',
+//   );
+// }
 
-function assingLongevityMilestone(userId,milestoneId) {
-  return axios.post(
-    'http://localhost:8080/api/milestone/assingLongevityMilestone',{
-      userId,
-      milestoneId
-    }
-  );
-}
+// function assingLongevityMilestone(userId,milestoneId) {
+//   return axios.post(
+//     'http://localhost:8080/api/milestone/assingLongevityMilestone',{
+//       userId,
+//       milestoneId
+//     }
+//   );
+// }
 
-filterSubs().then(subs => {
-  for( i in subs.data){
-    var frequency = subs.data[i].frequency
-    var paymentDate = subs.data[i].nextPaymentDate
-    var now = new Date();
-    if( frequency === 1){
-      var current = new Date(now.setMonth(now.getMonth() + 1));
-    }
-    else if ( frequency === 2){
-      var current = new Date(now.setMonth(now.getMonth() + 3));
-    }
-    else if (frequency === 3){
-      var current = new Date(now.setMonth(now.getMonth() + 6));
-    }
-    else{
-      var current = new Date(now.setMonth(now.getMonth() + 12));
-    }
-    var nextPaymentDate = current.toISOString().split('T')[0]
-    changeNextDate(subs.data[i].id,nextPaymentDate,paymentDate).then(res => console.log(res.status))
-    createTransaction(subs.data[i].amount,"recurrent",subs.data[i].userId,subs.data[i].id).then(res => console.log(res.status))
-  }
-});
+// filterSubs().then(subs => {
+//   for( i in subs.data){
+//     var frequency = subs.data[i].frequency
+//     var paymentDate = subs.data[i].nextPaymentDate
+//     var now = new Date();
+//     if( frequency === 1){
+//       var current = new Date(now.setMonth(now.getMonth() + 1));
+//     }
+//     else if ( frequency === 2){
+//       var current = new Date(now.setMonth(now.getMonth() + 3));
+//     }
+//     else if (frequency === 3){
+//       var current = new Date(now.setMonth(now.getMonth() + 6));
+//     }
+//     else{
+//       var current = new Date(now.setMonth(now.getMonth() + 12));
+//     }
+//     var nextPaymentDate = current.toISOString().split('T')[0]
+//     changeNextDate(subs.data[i].id,nextPaymentDate,paymentDate).then(res => console.log(res.status))
+//     createTransaction(subs.data[i].amount,"recurrent",subs.data[i].userId,subs.data[i].id).then(res => console.log(res.status))
+//   }
+// });
 
-pendingTransactions().then(transactions =>{
-  var value = 0
-  for(i in transactions.data){
-    if(value === 0){
-      modifyTransactionState(transactions.data[i].transactionId,"A").then(res => console.log(res.status))
-      value = 1
-    }
-    else{
-      modifyTransactionState(transactions.data[i].transactionId,"R").then(res => console.log(res.status))
-      value = 0
-    }
-  }
-})
-countRecurrentTransactions().then(res => {
-  console.log(res.data)
-  for(i in res.data){
-    if(res.data[i].count == 6){
-      assingLongevityMilestone(res.data[i].userId,3).then(res => console.log(res.status))
-    }
-    else if(res.data[i].count == 12){
-      assingLongevityMilestone(res.data[i].userId,4).then(res => console.log(res.status))
-    }
-    else{
-      console.log(res.data[i].count)
-    }
-  }
-})
+// pendingTransactions().then(transactions =>{
+//   var value = 0
+//   for(i in transactions.data){
+//     if(value === 0){
+//       modifyTransactionState(transactions.data[i].transactionId,"A").then(res => console.log(res.status))
+//       value = 1
+//     }
+//     else{
+//       modifyTransactionState(transactions.data[i].transactionId,"R").then(res => console.log(res.status))
+//       value = 0
+//     }
+//   }
+// })
+// countRecurrentTransactions().then(res => {
+//   console.log(res.data)
+//   for(i in res.data){
+//     if(res.data[i].count == 6){
+//       assingLongevityMilestone(res.data[i].userId,3).then(res => console.log(res.status))
+//     }
+//     else if(res.data[i].count == 12){
+//       assingLongevityMilestone(res.data[i].userId,4).then(res => console.log(res.status))
+//     }
+//     else{
+//       console.log(res.data[i].count)
+//     }
+//   }
+// })
 
 // set port, listen for requests
 let port=process.env.PORT||8080;
